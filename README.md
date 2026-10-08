@@ -32,10 +32,11 @@ Idle footprint: zero.
 
 ## What the key can do
 
-1. **A custom shortcut** — record any chord, including system ones like Alt+Tab.
-2. **An app, file, or link** — pick from a searchable list of installed apps, or enter any path or URL.
-3. **A Windows function** — choose from a curated, searchable catalog (Task View, snap, lock, Snip & Sketch, Magnifier, and more).
-4. **Nothing** — quietly disable the key.
+1. **A custom shortcut**: record any chord, including system ones like Alt+Tab.
+2. **Text**: type a character such as ç, or a short phrase, regardless of your keyboard layout.
+3. **An app, file, or link**: pick from a searchable list of installed apps, or enter any path or URL.
+4. **A Windows function**: choose from a curated, searchable catalog (Task View, snap, lock, Snip & Sketch, Magnifier, and more).
+5. **Nothing**: quietly disable the key.
 
 ## Installing
 

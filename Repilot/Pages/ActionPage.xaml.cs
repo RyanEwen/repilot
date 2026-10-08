@@ -46,6 +46,7 @@ public sealed partial class ActionPage : Page
             "KeyCombo" => CopilotActionType.KeyCombo,
             "LaunchApp" => CopilotActionType.LaunchApp,
             "WindowsFunction" => CopilotActionType.WindowsFunction,
+            "Text" => CopilotActionType.Text,
             _ => CopilotActionType.None,
         };
         if (newType == Action.Type) return; // ignore spurious/programmatic re-selection
@@ -64,10 +65,12 @@ public sealed partial class ActionPage : Page
             CopilotActionType.KeyCombo => "KeyCombo",
             CopilotActionType.LaunchApp => "LaunchApp",
             CopilotActionType.WindowsFunction => "WindowsFunction",
+            CopilotActionType.Text => "Text",
             _ => "None",
         });
 
         ComboDisplay.Text = a.Combo is { IsEmpty: false } c ? c.ToString() : "(not set)";
+        TextBox.Text = a.Text;
 
         // Launch box shows only custom (non-app) targets.
         bool isApp = a.LaunchPath.StartsWith(@"shell:AppsFolder\", StringComparison.OrdinalIgnoreCase);
@@ -98,6 +101,7 @@ public sealed partial class ActionPage : Page
         LaunchPanel.Visibility = type == CopilotActionType.LaunchApp ? V : C;
         FunctionPanel.Visibility = type == CopilotActionType.WindowsFunction ? V : C;
         NonePanel.Visibility = type == CopilotActionType.None ? V : C;
+        TextPanel.Visibility = type == CopilotActionType.Text ? V : C;
 
         if (type == CopilotActionType.LaunchApp) _ = EnsureAppsLoadedAsync();
     }
@@ -208,6 +212,14 @@ public sealed partial class ActionPage : Page
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e) => _recorder?.Stop();
+
+    /// <summary>Save text verbatim, including spaces, without changing the selected action type.</summary>
+    private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_loading) return;
+        Action.Text = TextBox.Text;
+        SettingsManager.SaveSettings();
+    }
 
     // ── Custom file / link ───────────────────────────────────────────
 

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Runtime.InteropServices;
 
 namespace Repilot.Models;
 
@@ -74,20 +75,32 @@ public static class KeyNames
         [VK_HOME] = "Home", [VK_LEFT] = "Left", [VK_UP] = "Up", [VK_RIGHT] = "Right",
         [VK_DOWN] = "Down", [VK_SNAPSHOT] = "PrtScn", [VK_INSERT] = "Insert", [VK_DELETE] = "Delete",
         [VK_APPS] = "Menu",
-        [0x2E] = "Delete", [0xBA] = ";", [0xBB] = "+", [0xBC] = ",", [0xBD] = "-", [0xBE] = ".",
-        [0xBF] = "/", [0xC0] = "`", [0xDB] = "[", [0xDC] = "\\", [0xDD] = "]", [0xDE] = "'",
     };
 
+    /// <summary>
+    /// Returns a friendly name using the calling thread's current keyboard layout
+    /// for printable keys. Special keys retain the app's existing labels. Unknown
+    /// keys fall back to their virtual-key code without changing keyboard state.
+    /// </summary>
     public static string Name(int vk)
     {
         if (Map.TryGetValue(vk, out var name)) return name;
+        // Preserve distinct numpad and function-key names before printable-key lookup.
+        if (vk >= 0x60 && vk <= 0x69) return "Num " + (vk - 0x60);
+        if (vk >= 0x70 && vk <= 0x87) return "F" + (vk - 0x70 + 1);
+        if (OperatingSystem.IsWindows())
+        {
+            const uint MAPVK_VK_TO_CHAR = 2;
+            uint character = MapVirtualKeyW((uint)vk, MAPVK_VK_TO_CHAR) & 0xFFFF;
+            if (character >= 0x20 && character != 0x7F)
+                return ((char)character).ToString();
+        }
         // A–Z and 0–9 map directly to their ASCII character
         if ((vk >= 0x30 && vk <= 0x39) || (vk >= 0x41 && vk <= 0x5A))
             return ((char)vk).ToString();
-        // Numpad 0–9
-        if (vk >= 0x60 && vk <= 0x69) return "Num " + (vk - 0x60);
-        // Function keys F1–F24
-        if (vk >= 0x70 && vk <= 0x87) return "F" + (vk - 0x70 + 1);
         return $"0x{vk:X2}";
     }
+
+    [DllImport("user32.dll", ExactSpelling = true)]
+    private static extern uint MapVirtualKeyW(uint uCode, uint uMapType);
 }

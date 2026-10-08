@@ -11,6 +11,8 @@ public enum CopilotActionType
     LaunchApp = 2,
     /// <summary>Run a curated Windows function (looked up in the catalog by Id).</summary>
     WindowsFunction = 3,
+    /// <summary>Type Unicode text into the foreground application.</summary>
+    Text = 4,
 }
 
 /// <summary>
@@ -26,4 +28,5 @@ public sealed class CopilotActionData
     public string LaunchArguments { get; set; } = "";
     public string LaunchDisplayName { get; set; } = "";
     public string WindowsFunctionId { get; set; } = "";
+    public string Text { get; set; } = "";
 }

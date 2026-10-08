@@ -36,6 +36,9 @@ public static class ActionExecutor
         {
             case CopilotActionType.None:
                 break;
+            case CopilotActionType.Text:
+                if (!string.IsNullOrEmpty(action.Text)) SendText(action.Text);
+                break;
             case CopilotActionType.KeyCombo:
                 if (action.Combo is { IsEmpty: false } combo) SendCombo(combo);
                 break;
@@ -77,6 +80,41 @@ public static class ActionExecutor
 
     // ── SendInput synthesis ──────────────────────────────────────────
 
+    /// <summary>
+    /// Sends literal text to the foreground app without translating through a keyboard
+    /// layout or using the clipboard. Each UTF-16 code unit gets a down/up pair, so
+    /// supplementary characters are sent as surrogate pairs. Requires a text-input
+    /// target that accepts Unicode keyboard packets; elevated targets may block input.
+    /// </summary>
+    private static void SendText(string text)
+    {
+        var inputs = new List<INPUT>();
+        foreach (char character in text)
+        {
+            AddUnicodeKey(inputs, character, up: false);
+            AddUnicodeKey(inputs, character, up: true);
+        }
+
+        SendInputs(inputs);
+    }
+
+    /// <summary>Adds a Unicode packet with no virtual key, as required by SendInput.</summary>
+    private static void AddUnicodeKey(List<INPUT> inputs, char character, bool up)
+    {
+        inputs.Add(new INPUT
+        {
+            type = INPUT_KEYBOARD,
+            u = new INPUTUNION
+            {
+                ki = new KEYBDINPUT
+                {
+                    wScan = character,
+                    dwFlags = KEYEVENTF_UNICODE | (up ? KEYEVENTF_KEYUP : 0),
+                }
+            }
+        });
+    }
+
     private static void SendCombo(KeyCombo combo)
     {
         var inputs = new List<INPUT>();
@@ -107,8 +145,19 @@ public static class ActionExecutor
         if (m.HasFlag(KeyMods.Control)) AddKey(inputs, VK_CONTROL, up: true);
         if (injectWin) AddKey(inputs, VK_LWIN, up: true);
 
-        var arr = inputs.ToArray();
-        SendInput((uint)arr.Length, arr, Marshal.SizeOf<INPUT>());
+        SendInputs(inputs);
+    }
+
+    /// <summary>Submits one ordered input batch and reports blocked or partial injection.</summary>
+    private static void SendInputs(List<INPUT> inputs)
+    {
+        var batch = inputs.ToArray();
+        uint sent = SendInput((uint)batch.Length, batch, Marshal.SizeOf<INPUT>());
+        if (sent != batch.Length)
+        {
+            throw new InvalidOperationException(
+                $"Windows accepted {sent} of {batch.Length} keyboard events (error {Marshal.GetLastWin32Error()}).");
+        }
     }
 
     private static bool IsDown(int vk) => (GetAsyncKeyState(vk) & 0x8000) != 0;
@@ -141,6 +190,7 @@ public static class ActionExecutor
     private const int INPUT_KEYBOARD = 1;
     private const uint KEYEVENTF_KEYUP = 0x0002;
     private const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
+    private const uint KEYEVENTF_UNICODE = 0x0004;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct KEYBDINPUT { public ushort wVk; public ushort wScan; public uint dwFlags; public uint time; public IntPtr dwExtraInfo; }

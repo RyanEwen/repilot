@@ -20,6 +20,9 @@
             <SelectorBarItem Text="Shortcut" Tag="KeyCombo">
                 <SelectorBarItem.Icon><FontIcon Glyph="&#xE765;" /></SelectorBarItem.Icon>
             </SelectorBarItem>
+            <SelectorBarItem Text="Text" Tag="Text">
+                <SelectorBarItem.Icon><FontIcon Glyph="&#xE8D2;" /></SelectorBarItem.Icon>
+            </SelectorBarItem>
             <SelectorBarItem Text="App or link" Tag="LaunchApp">
                 <SelectorBarItem.Icon><FontIcon Glyph="&#xE8E5;" /></SelectorBarItem.Icon>
             </SelectorBarItem>
@@ -33,6 +36,14 @@
 
         <!-- Mode-specific config -->
         <Grid Grid.Row="3">
+
+            <!-- Text -->
+            <StackPanel x:Name="TextPanel" Spacing="12" Visibility="Collapsed" VerticalAlignment="Top">
+                <TextBlock TextWrapping="Wrap" Opacity="0.8"
+                           Text="Enter the character or text to type, such as ç. Press the Copilot key while a text field in another app is focused. This works independently of your keyboard layout." />
+                <TextBox x:Name="TextBox" Header="Text to type" PlaceholderText="e.g. ç"
+                         TextChanged="TextBox_TextChanged" MaxWidth="520" HorizontalAlignment="Stretch" />
+            </StackPanel>
 
             <!-- KeyCombo -->
             <StackPanel x:Name="ComboPanel" Spacing="12" Visibility="Collapsed" VerticalAlignment="Top">
